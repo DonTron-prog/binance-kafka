@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: binance-kafka-streams
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: crypto-consumer-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.crypto.model
+    streams:
+      application-id: crypto-streams-app
+      properties:
+        default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+        default.value.serde: org.springframework.kafka.support.serializer.JsonSerde
+        spring.json.trusted.packages: com.crypto.model
+
+server:
+  port: 8081
+
+# Binance WebSocket Configuration
+binance:
+  websocket:
+    base-url: wss://stream.binance.com:9443
+    symbols: btcusdt,ethusdt,bnbusdt
+    streams:
+      - trade
+      - kline_1m
+      - depth
+
+# Kafka Topics
+kafka:
+  topics:
+    raw-trades: crypto-raw-trades
+    aggregated-prices: crypto-aggregated-prices
+    volume-analytics: crypto-volume-analytics
+    price-trends: crypto-price-trends
+    alerts: crypto-alerts
+
+# WebSocket Server Configuration
+websocket:
+  server:
+    endpoint: /ws
+    allowed-origins: "*"
+
+# Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    com.crypto: DEBUG
+    org.apache.kafka: INFO
