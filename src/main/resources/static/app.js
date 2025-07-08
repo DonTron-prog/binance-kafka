@@ -7,7 +7,6 @@ let subscriptions = {};
 let priceChart = null;
 let volumeChart = null;
 const WINDOW_MINUTES = 10;
-const maxDataPoints = WINDOW_MINUTES * 60; // 10 minutes * 60 seconds = 600 points max
 
 // Data management
 let priceDataBuffer = [];
@@ -19,6 +18,10 @@ let lastUpdateTime = 0;
 function cleanOldData() {
     const tenMinutesAgo = new Date(Date.now() - WINDOW_MINUTES * 60 * 1000);
     
+    const beforePrice = priceDataBuffer.length;
+    const beforeBuy = volumeDataBuffer.buy.length;
+    const beforeSell = volumeDataBuffer.sell.length;
+    
     // Clean price data
     priceDataBuffer = priceDataBuffer.filter(point => point.x > tenMinutesAgo);
     
@@ -26,6 +29,11 @@ function cleanOldData() {
     volumeDataBuffer.buy = volumeDataBuffer.buy.filter(point => point.x > tenMinutesAgo);
     volumeDataBuffer.sell = volumeDataBuffer.sell.filter(point => point.x > tenMinutesAgo);
     aggregatedVolumeBuffer = aggregatedVolumeBuffer.filter(point => point.x > tenMinutesAgo);
+    
+    console.log('🧹 Data cleaning:', `Price: ${beforePrice} → ${priceDataBuffer.length}`, 
+                `Buy: ${beforeBuy} → ${volumeDataBuffer.buy.length}`, 
+                `Sell: ${beforeSell} → ${volumeDataBuffer.sell.length}`,
+                `Cutoff: ${tenMinutesAgo.toISOString()}`);
 }
 
 // Aggregate volume data into 30-second buckets for better visualization
@@ -79,8 +87,17 @@ function updateChartsFromBuffer(forceUpdate = false) {
         
         // Update chart options to reflect current time window
         const tenMinutesAgo = new Date(Date.now() - WINDOW_MINUTES * 60 * 1000);
+        const now = new Date();
+        
+        // Update the scale options directly
         priceChart.options.scales.x.min = tenMinutesAgo;
-        priceChart.options.scales.x.max = new Date();
+        priceChart.options.scales.x.max = now;
+        
+        console.log('📊 Chart time window:', tenMinutesAgo.toISOString(), 'to', now.toISOString());
+        console.log('📊 Data time range:', 
+                   sortedPriceData.length > 0 ? sortedPriceData[0].x.toISOString() : 'none',
+                   'to', 
+                   sortedPriceData.length > 0 ? sortedPriceData[sortedPriceData.length - 1].x.toISOString() : 'none');
         
         priceChart.update('none');
         console.log('📊 Price chart updated with', sortedPriceData.length, 'points');
@@ -352,11 +369,6 @@ function subscribeToSymbol(symbol) {
             };
             
             priceDataBuffer.push(pricePoint);
-            
-            // Limit buffer size to prevent memory issues
-            if (priceDataBuffer.length > maxDataPoints) {
-                priceDataBuffer = priceDataBuffer.slice(-maxDataPoints);
-            }
         } else {
             console.warn('⚠️ Invalid price data received:', trade.price);
         }
@@ -376,17 +388,14 @@ function subscribeToSymbol(symbol) {
             
             if (isBuy) {
                 volumeDataBuffer.buy.push(volumePoint);
-                console.log('📈 Buy volume:', volumeValue.toFixed(2), 'USD');
             } else {
                 volumeDataBuffer.sell.push(volumePoint);
-                console.log('📉 Sell volume:', volumeValue.toFixed(2), 'USD');
             }
         } else {
             console.warn('⚠️ Invalid volume data received - quantity:', trade.quantity, 'price:', trade.price);
         }
         
-        // Clean old data and update chart immediately for price updates
-        cleanOldData();
+        // Update chart immediately for price updates (clean less frequently)
         updateChartsFromBuffer(true); // Force update for price data
         
         console.log('💰 Price updated:', trade.symbol, '@', parseFloat(trade.price), 'Buffer sizes - Price:', priceDataBuffer.length, 'Buy:', volumeDataBuffer.buy.length, 'Sell:', volumeDataBuffer.sell.length);
@@ -421,13 +430,7 @@ function updatePriceData(price) {
         
         priceDataBuffer.push(pricePoint);
         
-        // Limit buffer size
-        if (priceDataBuffer.length > maxDataPoints) {
-            priceDataBuffer = priceDataBuffer.slice(-maxDataPoints);
-        }
-        
         // Update charts
-        cleanOldData();
         updateChartsFromBuffer(true);
         
         console.log('📊 Aggregated price added to chart:', price.symbol, '@', priceValue);
@@ -482,8 +485,7 @@ function updateVolumeData(volume) {
         });
     }
     
-    // Clean old data and update chart
-    cleanOldData();
+    // Update chart
     updateChartsFromBuffer();
     
     console.log('📊 Volume updated:', volume.symbol, 'Buy:', buyVolume, 'Sell:', sellVolume, 'Buffer sizes:', volumeDataBuffer.buy.length, volumeDataBuffer.sell.length);
@@ -635,10 +637,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 2000);
     
-    // Update charts every 2 seconds to maintain 10-minute sliding window
+    // Update charts every 10 seconds to maintain 10-minute sliding window
     setInterval(() => {
         cleanOldData();
-        updateChartsFromBuffer(true); // Force update every 2 seconds
+        updateChartsFromBuffer(true); // Force update every 10 seconds
         console.log('🔄 Charts refreshed - Price points:', priceDataBuffer.length, 'Volume points:', volumeDataBuffer.buy.length);
         
         // Debug: Show sample data points
@@ -658,5 +660,5 @@ document.addEventListener('DOMContentLoaded', function() {
             testDataInterval = null;
             console.log('🎯 Real data detected, stopping test data generation');
         }
-    }, 2000);
+    }, 10000);
 });
