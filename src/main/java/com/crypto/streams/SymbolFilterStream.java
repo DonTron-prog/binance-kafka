@@ -40,19 +40,16 @@ public class SymbolFilterStream {
         // Filter for BTC/USDT trades
         tradesStream
             .filter((key, trade) -> "BTCUSDT".equals(trade.getSymbol()))
-            .peek((key, trade) -> log.debug("Filtered BTC trade: {} @ {}", trade.getQuantity(), trade.getPrice()))
             .to(filteredTradesBtcTopic, Produced.with(Serdes.String(), tradeSerde));
         
         // Filter for ETH/USDT trades
         tradesStream
             .filter((key, trade) -> "ETHUSDT".equals(trade.getSymbol()))
-            .peek((key, trade) -> log.debug("Filtered ETH trade: {} @ {}", trade.getQuantity(), trade.getPrice()))
             .to(filteredTradesEthTopic, Produced.with(Serdes.String(), tradeSerde));
         
         // Filter for BNB/USDT trades
         tradesStream
             .filter((key, trade) -> "BNBUSDT".equals(trade.getSymbol()))
-            .peek((key, trade) -> log.debug("Filtered BNB trade: {} @ {}", trade.getQuantity(), trade.getPrice()))
             .to(filteredTradesBnbTopic, Produced.with(Serdes.String(), tradeSerde));
         
         log.info("Symbol filter stream pipeline configured");

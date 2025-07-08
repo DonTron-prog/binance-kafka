@@ -26,10 +26,7 @@ public class MarketDataController {
     @GetMapping("/api/streams")
     public Map<String, List<String>> getAvailableStreams() {
         return Map.of(
-            "prices", List.of("1m", "5m", "15m"),
-            "trends", List.of("current"),
-            "volume", List.of("1m", "5m", "1h"),
-            "alerts", List.of("all", "symbol-specific")
+            "filtered-trades", List.of("BTCUSDT", "ETHUSDT", "BNBUSDT")
         );
     }
     

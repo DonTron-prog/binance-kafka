@@ -50,6 +50,7 @@ function subscribeToSymbol(symbol) {
     
     currentSubscription = stompClient.subscribe(topic, function (message) {
         const trade = JSON.parse(message.body);
+        console.log('Received trade:', trade);
         displayTrade(trade);
     });
 }
@@ -62,20 +63,40 @@ function displayTrade(trade) {
         tableBody.innerHTML = '';
     }
     
+    // Debug: log the trade object structure
+    console.log('Trade object keys:', Object.keys(trade));
+    console.log('Full trade object:', JSON.stringify(trade, null, 2));
+    
     // Create new row
     const row = document.createElement('tr');
     
-    // Format time
-    const time = moment(trade.tradeTime).format('HH:mm:ss.SSS');
+    // Check all possible field names for price
+    const priceValue = trade.price || trade.p || trade.Price || 0;
+    const quantityValue = trade.quantity || trade.q || trade.Quantity || 0;
+    const tradeTimeValue = trade.tradeTime || trade.T || trade.TradeTime || Date.now();
+    const buyerMakerValue = trade.buyerMaker !== undefined ? trade.buyerMaker : 
+                           (trade.isBuyerMaker !== undefined ? trade.isBuyerMaker : 
+                           (trade.m !== undefined ? trade.m : false));
     
-    // Format price and quantity
-    const price = parseFloat(trade.price).toFixed(2);
-    const quantity = parseFloat(trade.quantity).toFixed(6);
-    const volume = (parseFloat(trade.price) * parseFloat(trade.quantity)).toFixed(2);
+    console.log('Extracted values:', {
+        price: priceValue,
+        quantity: quantityValue,
+        tradeTime: tradeTimeValue,
+        buyerMaker: buyerMakerValue
+    });
+    
+    // Format time
+    const time = moment(tradeTimeValue).format('HH:mm:ss.SSS');
+    
+    // Format price and quantity - handle both string and number formats
+    const price = priceValue ? parseFloat(priceValue).toFixed(2) : '0.00';
+    const quantity = quantityValue ? parseFloat(quantityValue).toFixed(6) : '0.000000';
+    const volume = (priceValue && quantityValue) ? 
+        (parseFloat(priceValue) * parseFloat(quantityValue)).toFixed(2) : '0.00';
     
     // Determine side (buy/sell)
-    const side = trade.buyerMaker ? 'SELL' : 'BUY';
-    const sideClass = trade.buyerMaker ? 'text-danger' : 'text-success';
+    const side = buyerMakerValue ? 'SELL' : 'BUY';
+    const sideClass = buyerMakerValue ? 'text-danger' : 'text-success';
     
     row.innerHTML = `
         <td>${time}</td>

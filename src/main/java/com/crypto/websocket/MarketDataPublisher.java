@@ -1,5 +1,6 @@
 package com.crypto.websocket;
 
+import com.crypto.dto.TradeDTO;
 import com.crypto.model.Trade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,8 +21,24 @@ public class MarketDataPublisher {
         containerFactory = "kafkaListenerContainerFactory"
     )
     public void publishBtcTrades(Trade trade) {
+        log.info("Received BTC trade: {}", trade);
+        log.info("BTC trade details - Price: {}, Quantity: {}, Symbol: {}, TradeTime: {}", 
+            trade.getPrice(), trade.getQuantity(), trade.getSymbol(), trade.getTradeTime());
         log.debug("Publishing BTC trade: {} @ {}", trade.getQuantity(), trade.getPrice());
-        messagingTemplate.convertAndSend("/topic/filtered-trades/BTCUSDT", trade);
+        
+        TradeDTO dto = TradeDTO.builder()
+            .symbol(trade.getSymbol())
+            .price(trade.getPrice())
+            .quantity(trade.getQuantity())
+            .volume(trade.getVolume())
+            .tradeTime(trade.getTradeTime())
+            .isBuyerMaker(trade.getIsBuyerMaker())
+            .eventType(trade.getEventType())
+            .eventTime(trade.getEventTime())
+            .tradeId(trade.getTradeId())
+            .build();
+            
+        messagingTemplate.convertAndSend("/topic/filtered-trades/BTCUSDT", dto);
     }
     
     @KafkaListener(
@@ -31,7 +48,20 @@ public class MarketDataPublisher {
     )
     public void publishEthTrades(Trade trade) {
         log.debug("Publishing ETH trade: {} @ {}", trade.getQuantity(), trade.getPrice());
-        messagingTemplate.convertAndSend("/topic/filtered-trades/ETHUSDT", trade);
+        
+        TradeDTO dto = TradeDTO.builder()
+            .symbol(trade.getSymbol())
+            .price(trade.getPrice())
+            .quantity(trade.getQuantity())
+            .volume(trade.getVolume())
+            .tradeTime(trade.getTradeTime())
+            .isBuyerMaker(trade.getIsBuyerMaker())
+            .eventType(trade.getEventType())
+            .eventTime(trade.getEventTime())
+            .tradeId(trade.getTradeId())
+            .build();
+            
+        messagingTemplate.convertAndSend("/topic/filtered-trades/ETHUSDT", dto);
     }
     
     @KafkaListener(
@@ -41,6 +71,19 @@ public class MarketDataPublisher {
     )
     public void publishBnbTrades(Trade trade) {
         log.debug("Publishing BNB trade: {} @ {}", trade.getQuantity(), trade.getPrice());
-        messagingTemplate.convertAndSend("/topic/filtered-trades/BNBUSDT", trade);
+        
+        TradeDTO dto = TradeDTO.builder()
+            .symbol(trade.getSymbol())
+            .price(trade.getPrice())
+            .quantity(trade.getQuantity())
+            .volume(trade.getVolume())
+            .tradeTime(trade.getTradeTime())
+            .isBuyerMaker(trade.getIsBuyerMaker())
+            .eventType(trade.getEventType())
+            .eventTime(trade.getEventTime())
+            .tradeId(trade.getTradeId())
+            .build();
+            
+        messagingTemplate.convertAndSend("/topic/filtered-trades/BNBUSDT", dto);
     }
 }

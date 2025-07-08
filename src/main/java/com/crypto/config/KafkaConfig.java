@@ -1,7 +1,5 @@
 package com.crypto.config;
 
-import com.crypto.model.AggregatedPrice;
-import com.crypto.model.PriceTrend;
 import com.crypto.model.Trade;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.serialization.Serdes;
@@ -33,17 +31,14 @@ public class KafkaConfig {
     @Value("${kafka.topics.raw-trades}")
     private String rawTradesTopic;
     
-    @Value("${kafka.topics.aggregated-prices}")
-    private String aggregatedPricesTopic;
+    @Value("${kafka.topics.filtered-trades-btcusdt}")
+    private String filteredTradesBtcTopic;
     
-    @Value("${kafka.topics.volume-analytics}")
-    private String volumeAnalyticsTopic;
+    @Value("${kafka.topics.filtered-trades-ethusdt}")
+    private String filteredTradesEthTopic;
     
-    @Value("${kafka.topics.price-trends}")
-    private String priceTrendsTopic;
-    
-    @Value("${kafka.topics.alerts}")
-    private String alertsTopic;
+    @Value("${kafka.topics.filtered-trades-bnbusdt}")
+    private String filteredTradesBnbTopic;
     
     @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
     public KafkaStreamsConfiguration kStreamsConfig() {
@@ -68,33 +63,25 @@ public class KafkaConfig {
     }
     
     @Bean
-    public NewTopic aggregatedPricesTopic() {
-        return TopicBuilder.name(aggregatedPricesTopic)
-                .partitions(3)
+    public NewTopic filteredTradesBtcTopic() {
+        return TopicBuilder.name(filteredTradesBtcTopic)
+                .partitions(1)
                 .replicas(1)
                 .build();
     }
     
     @Bean
-    public NewTopic volumeAnalyticsTopic() {
-        return TopicBuilder.name(volumeAnalyticsTopic)
-                .partitions(3)
+    public NewTopic filteredTradesEthTopic() {
+        return TopicBuilder.name(filteredTradesEthTopic)
+                .partitions(1)
                 .replicas(1)
                 .build();
     }
     
     @Bean
-    public NewTopic priceTrendsTopic() {
-        return TopicBuilder.name(priceTrendsTopic)
-                .partitions(3)
-                .replicas(1)
-                .build();
-    }
-    
-    @Bean
-    public NewTopic alertsTopic() {
-        return TopicBuilder.name(alertsTopic)
-                .partitions(3)
+    public NewTopic filteredTradesBnbTopic() {
+        return TopicBuilder.name(filteredTradesBnbTopic)
+                .partitions(1)
                 .replicas(1)
                 .build();
     }
@@ -102,16 +89,6 @@ public class KafkaConfig {
     @Bean
     public JsonSerde<Trade> tradeSerde() {
         return new JsonSerde<>(Trade.class);
-    }
-    
-    @Bean
-    public JsonSerde<AggregatedPrice> aggregatedPriceSerde() {
-        return new JsonSerde<>(AggregatedPrice.class);
-    }
-    
-    @Bean
-    public JsonSerde<PriceTrend> priceTrendSerde() {
-        return new JsonSerde<>(PriceTrend.class);
     }
     
     @Bean
