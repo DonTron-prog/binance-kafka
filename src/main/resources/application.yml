@@ -36,10 +36,9 @@ binance:
 kafka:
   topics:
     raw-trades: crypto-raw-trades
-    aggregated-prices: crypto-aggregated-prices
-    volume-analytics: crypto-volume-analytics
-    price-trends: crypto-price-trends
-    alerts: crypto-alerts
+    filtered-trades-btcusdt: crypto-filtered-trades-btcusdt
+    filtered-trades-ethusdt: crypto-filtered-trades-ethusdt
+    filtered-trades-bnbusdt: crypto-filtered-trades-bnbusdt
 
 # WebSocket Server Configuration
 websocket:

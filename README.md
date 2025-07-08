@@ -1,23 +1,26 @@
-# Binance Kafka Streams - Real-Time Cryptocurrency Analytics
+# Kafka Streams Symbol Filter Demo
 
-A real-time cryptocurrency data processing pipeline that streams live price data from Binance exchange through Apache Kafka and processes it using Kafka Streams for analytics and trend detection.
+A simplified demonstration of Kafka Streams filtering capabilities that streams live cryptocurrency data from Binance and filters trades by symbol.
 
-## Architecture Overview
+## Overview
+
+This demo application showcases:
+- **Kafka Streams Filtering**: Simple symbol-based filtering of trade data
+- **Real-time Processing**: Live cryptocurrency trades from Binance WebSocket API
+- **WebSocket Delivery**: Filtered trades delivered to web dashboard via WebSocket
+
+## Architecture
 
 ```
-Binance WebSocket API → Kafka Producer → Kafka Topics → Kafka Streams Processing → WebSocket Server → Real-time Dashboard
+Binance WebSocket → Kafka (raw-trades) → Symbol Filter Stream → Kafka (filtered-trades-{symbol}) → WebSocket → Dashboard
 ```
 
 ## Features
 
-- **Real-time Data Ingestion**: Connects to Binance WebSocket API for live cryptocurrency data
-- **Stream Processing**: Uses Kafka Streams for real-time analytics including:
-  - Price aggregations (1min, 5min, 15min windows)
-  - Volume analysis and buy/sell pressure
-  - Trend detection with technical indicators (SMA, EMA, RSI)
-  - Anomaly detection and alerts
-- **Real-time Visualization**: Web dashboard with live charts and alerts
-- **Scalable Architecture**: Built on Apache Kafka for high throughput and fault tolerance
+- Connects to Binance WebSocket API for BTC/USDT, ETH/USDT, and BNB/USDT
+- Filters trades by symbol using Kafka Streams
+- Displays real-time filtered trade feed in web interface
+- Shows trade time, price, quantity, volume, and buy/sell side
 
 ## Prerequisites
 
@@ -39,78 +42,57 @@ Binance WebSocket API → Kafka Producer → Kafka Topics → Kafka Streams Proc
 
 3. **Run the Application**
    ```bash
-   java -jar target/binance-kafka-streams-1.0.0.jar --server.port=8081
+   java -jar target/binance-kafka-streams-1.0.0.jar
    ```
 
 4. **Access the Dashboard**
-   - Open http://localhost:8080 in your browser
-   - The dashboard will automatically connect to the WebSocket server
+   - Open http://localhost:8081 in your browser
+   - Select a symbol from the dropdown to see filtered trades
 
-## Configuration
+## Kafka Topics
 
-Key configuration options in `application.yml`:
-
-- **Binance WebSocket**: Configure symbols and streams to subscribe to
-- **Kafka Topics**: Define topic names for different data streams
-- **Stream Processing**: Adjust window sizes and processing parameters
+- `crypto-raw-trades`: All incoming trades from Binance
+- `crypto-filtered-trades-btcusdt`: Filtered BTC/USDT trades only
+- `crypto-filtered-trades-ethusdt`: Filtered ETH/USDT trades only  
+- `crypto-filtered-trades-bnbusdt`: Filtered BNB/USDT trades only
 
 ## Project Structure
 
 ```
 src/main/java/com/crypto/
-├── model/              # Domain models (Trade, AggregatedPrice, etc.)
-├── binance/           # Binance WebSocket client
-├── streams/           # Kafka Streams processing applications
-├── websocket/         # WebSocket server for real-time data delivery
-├── controller/        # REST endpoints
-└── config/           # Configuration classes
+├── streams/
+│   └── SymbolFilterStream.java    # Kafka Streams filter implementation
+├── websocket/
+│   └── MarketDataPublisher.java   # Publishes filtered trades to WebSocket
+└── model/
+    └── Trade.java                 # Trade data model
 ```
 
-## Kafka Topics
+## How the Filter Works
 
-- `crypto-raw-trades`: Raw trade data from Binance
-- `crypto-aggregated-prices`: OHLCV data for different time windows
-- `crypto-volume-analytics`: Volume analysis and buy/sell pressure
-- `crypto-price-trends`: Technical indicators and trend analysis
-- `crypto-alerts`: Real-time alerts for significant events
+The `SymbolFilterStream` class:
+1. Reads from the `crypto-raw-trades` topic
+2. Filters trades based on the symbol field
+3. Writes filtered trades to symbol-specific topics
 
-## Technical Indicators
+```java
+tradesStream
+    .filter((key, trade) -> "BTCUSDT".equals(trade.getSymbol()))
+    .to(filteredTradesBtcTopic);
+```
 
-The system calculates various technical indicators:
-- Simple Moving Averages (SMA): 5, 15, 30 periods
-- Exponential Moving Averages (EMA): 5, 15 periods
-- Relative Strength Index (RSI)
-- Volume-Weighted Average Price (VWAP)
-- Momentum indicators
+## Dashboard
 
-## Alerts
-
-The system generates alerts for:
-- Price spikes (>2% change in 1 minute)
-- Golden/Death cross patterns
-- Overbought/Oversold conditions (RSI)
-- Unusual volume activity
-- Heavy buying/selling pressure
-
-## Monitoring
-
-- Health endpoint: http://localhost:8080/health
-- Metrics endpoint: http://localhost:8080/actuator/metrics
-- Prometheus metrics: http://localhost:8080/actuator/prometheus
-- Kafka UI: http://localhost:8090 (when using docker-compose)
+The web dashboard provides:
+- Symbol selector (BTC/USDT, ETH/USDT, BNB/USDT)
+- Real-time filtered trade feed
+- Trade count and last update time
+- Color-coded buy (green) and sell (red) indicators
 
 ## Development
 
-To add new cryptocurrencies, update the `binance.websocket.symbols` configuration in `application.yml`.
-
-To add new stream processing logic, create a new class in the `streams` package and annotate methods with `@Autowired` to build the pipeline.
-
-## Troubleshooting
-
-- **Connection Issues**: Check if Kafka is running and accessible
-- **No Data**: Verify Binance WebSocket URL and network connectivity
-- **Processing Delays**: Monitor Kafka consumer lag through Kafka UI
+To modify the filtering logic, edit `SymbolFilterStream.java`. The filter predicates can be customized to filter by price, volume, or any other trade attribute.
 
 ## License
 
-This project is for educational purposes. Please comply with Binance API terms of service when using in production.
+This project is for educational purposes.
