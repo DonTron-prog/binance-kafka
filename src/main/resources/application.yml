@@ -1,23 +1,11 @@
 spring:
   application:
-    name: binance-kafka-streams
+    name: binance-kafka-producer
   kafka:
     bootstrap-servers: localhost:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-    consumer:
-      group-id: crypto-consumer-group
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: com.crypto.model
-    streams:
-      application-id: crypto-streams-app
-      properties:
-        default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
-        default.value.serde: org.springframework.kafka.support.serializer.JsonSerde
-        spring.json.trusted.packages: com.crypto.model
 
 server:
   port: 8081
@@ -29,22 +17,11 @@ binance:
     symbols: btcusdt,ethusdt,bnbusdt
     streams:
       - trade
-      - kline_1m
-      - depth
 
 # Kafka Topics
 kafka:
   topics:
     raw-trades: crypto-raw-trades
-    filtered-trades-btcusdt: crypto-filtered-trades-btcusdt
-    filtered-trades-ethusdt: crypto-filtered-trades-ethusdt
-    filtered-trades-bnbusdt: crypto-filtered-trades-bnbusdt
-
-# WebSocket Server Configuration
-websocket:
-  server:
-    endpoint: /ws
-    allowed-origins: "*"
 
 # Monitoring
 management:
