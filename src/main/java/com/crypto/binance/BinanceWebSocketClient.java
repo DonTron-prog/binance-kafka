@@ -1,3 +1,4 @@
+// connect to the Binance WebSocket API, consume trade data, and produce it to Kafka topics.
 package com.crypto.binance;
 
 import com.crypto.model.Trade;

@@ -1,3 +1,6 @@
+// main entry point for the Binance Kafka application
+// manages websocket client and kafka components
+// 
 package com.crypto;
 
 import org.springframework.boot.SpringApplication;

@@ -1,3 +1,4 @@
+// POJO mapping for Binance trade data
 package com.crypto.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
