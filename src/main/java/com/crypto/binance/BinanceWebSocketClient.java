@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @RequiredArgsConstructor
 public class BinanceWebSocketClient {
     
-    private final KafkaTemplate<String, Trade> kafkaTemplate;
+    private final KafkaTemplate<String, Trade> tradeKafkaTemplate;
     private final ObjectMapper objectMapper;
     
     @Value("${binance.websocket.base-url}")
@@ -152,7 +152,7 @@ public class BinanceWebSocketClient {
             trade.getSymbol(), trade.getQuantity(), trade.getPrice(), trade.getEventType());
             
         if ("trade".equals(trade.getEventType())) {
-            kafkaTemplate.send(rawTradesTopic, trade.getSymbol(), trade)
+            tradeKafkaTemplate.send(rawTradesTopic, trade.getSymbol(), trade)
                 .whenComplete((result, ex) -> {
                     if (ex != null) {
                         log.error("Failed to send trade to Kafka", ex);

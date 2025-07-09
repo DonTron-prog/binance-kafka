@@ -1,26 +1,12 @@
-# Kafka Streams Symbol Filter Demo
+# Binance Kafka Streaming Pipeline
 
-A simplified demonstration of Kafka Streams filtering capabilities that streams live cryptocurrency data from Binance and filters trades by symbol.
-
-## Overview
-
-This demo application showcases:
-- **Kafka Streams Filtering**: Simple symbol-based filtering of trade data
-- **Real-time Processing**: Live cryptocurrency trades from Binance WebSocket API
-- **WebSocket Delivery**: Filtered trades delivered to web dashboard via WebSocket
+A cryptocurrency trading data pipeline that streams live trades from Binance WebSocket API, publishes them to Kafka, and filters trades by symbol using Kafka Streams.
 
 ## Architecture
 
 ```
-Binance WebSocket → Kafka (raw-trades) → Symbol Filter Stream → Kafka (filtered-trades-{symbol}) → WebSocket → Dashboard
+Binance WebSocket → Kafka (crypto-raw-trades) → Kafka Streams Filter → Kafka (filtered-trades-{symbol})
 ```
-
-## Features
-
-- Connects to Binance WebSocket API for BTC/USDT, ETH/USDT, and BNB/USDT
-- Filters trades by symbol using Kafka Streams
-- Displays real-time filtered trade feed in web interface
-- Shows trade time, price, quantity, volume, and buy/sell side
 
 ## Prerequisites
 
@@ -30,69 +16,75 @@ Binance WebSocket → Kafka (raw-trades) → Symbol Filter Stream → Kafka (fil
 
 ## Quick Start
 
-1. **Start Kafka**
-   ```bash
-   docker compose up -d
-   ```
-
-2. **Build the Application**
-   ```bash
-   mvn clean package
-   ```
-
-3. **Run the Application**
-   ```bash
-   java -jar target/binance-kafka-streams-1.0.0.jar
-   ```
-
-4. **Access the Dashboard**
-   - Open http://localhost:8081 in your browser
-   - Select a symbol from the dropdown to see filtered trades
-
-## Kafka Topics
-
-- `crypto-raw-trades`: All incoming trades from Binance
-- `crypto-filtered-trades-btcusdt`: Filtered BTC/USDT trades only
-- `crypto-filtered-trades-ethusdt`: Filtered ETH/USDT trades only  
-- `crypto-filtered-trades-bnbusdt`: Filtered BNB/USDT trades only
-
-## Project Structure
-
-```
-src/main/java/com/crypto/
-├── streams/
-│   └── SymbolFilterStream.java    # Kafka Streams filter implementation
-├── websocket/
-│   └── MarketDataPublisher.java   # Publishes filtered trades to WebSocket
-└── model/
-    └── Trade.java                 # Trade data model
+### 1. Start Kafka
+```bash
+docker compose up -d
 ```
 
-## How the Filter Works
-
-The `SymbolFilterStream` class:
-1. Reads from the `crypto-raw-trades` topic
-2. Filters trades based on the symbol field
-3. Writes filtered trades to symbol-specific topics
-
-```java
-tradesStream
-    .filter((key, trade) -> "BTCUSDT".equals(trade.getSymbol()))
-    .to(filteredTradesBtcTopic);
+### 2. Start the Binance Data Producer
+This connects to Binance WebSocket API and streams live trades to the `crypto-raw-trades` topic:
+```bash
+mvn spring-boot:run
 ```
 
-## Dashboard
+### 3. Verify Raw Trade Stream
+In a new terminal, run the consumer to see live trades from Binance:
+```bash
+./run-consumer.sh
+```
 
-The web dashboard provides:
-- Symbol selector (BTC/USDT, ETH/USDT, BNB/USDT)
-- Real-time filtered trade feed
-- Trade count and last update time
-- Color-coded buy (green) and sell (red) indicators
+You should see live trade data from Binance streaming in your terminal.
 
-## Development
+### 4. Start the Filtering Application
+Once you've verified the raw stream is working, start the filtering application to process trades by symbol:
+```bash
+# In a new terminal
+java -cp target/classes:$(mvn dependency:build-classpath -Dmdep.outputFile=/dev/stdout -q) com.crypto.streams.BinanceFilteringApp
+```
 
-To modify the filtering logic, edit `SymbolFilterStream.java`. The filter predicates can be customized to filter by price, volume, or any other trade attribute.
+### 5. Verify Filtered Streams
+```bash
+# in a new terminal
+./run-filtered-conslumer.sh
+```
+The filtering application creates these output topics:
+- `filtered-trades-btcusdt`: BTC/USDT trades only
+- `filtered-trades-ethusdt`: ETH/USDT trades only  
+- `filtered-trades-bnbusdt`: BNB/USDT trades only
 
-## License
 
-This project is for educational purposes.
+## Key Components
+
+### BinanceWebSocketClient.java
+- Connects to Binance WebSocket API
+- Streams live BTC/USDT, ETH/USDT, and BNB/USDT trades
+- Publishes raw trades to `crypto-raw-trades` topic
+
+### RawTradeConsumer.java  
+- CLI tool to consume and display trades from `crypto-raw-trades` topic
+- Useful for debugging and monitoring incoming data
+- Run with: `./run-consumer.sh`
+
+### BinanceFilteringApp.java
+- Kafka Streams application that filters trades by symbol
+- Reads from `crypto-raw-trades` topic
+- Routes filtered trades to symbol-specific topics
+- Uses JSON string matching to filter by symbol field
+
+## Workflow
+
+1. **Start the producer** (`mvn spring-boot:run`) to get live data from Binance
+2. **Verify the raw stream** (`./run-consumer.sh`) to ensure trades are flowing
+3. **Start the filtering app** to process trades by symbol
+4. **Monitor filtered streams** by consuming from the filtered topics
+
+## Stopping Applications
+
+- Press `Ctrl+C` in each terminal to stop applications
+- Stop Kafka: `docker compose down`
+
+## Troubleshooting
+
+- **No data streaming**: Make sure the producer is running first
+- **Kafka connection errors**: Restart Kafka with `docker compose restart`
+- **Port conflicts**: Kill processes using ports 8080/8081 with `lsof -i :8080` and `kill -9 <PID>`
