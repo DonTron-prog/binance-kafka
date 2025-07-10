@@ -29,7 +29,7 @@ public class BinanceFilteringApp {
     private static final Logger logger = LoggerFactory.getLogger(BinanceFilteringApp.class);
     
     // Topic names
-    private static final String SOURCE_TOPIC = "crypto-raw-trades";
+    private static final String SOURCE_TOPIC = "raw_binance_data";
     private static final String BTCUSDT_SINK_TOPIC = "filtered-trades-btcusdt";
     private static final String ETHUSDT_SINK_TOPIC = "filtered-trades-ethusdt";
     private static final String BNBUSDT_SINK_TOPIC = "filtered-trades-bnbusdt";
